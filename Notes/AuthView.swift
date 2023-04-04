@@ -14,36 +14,39 @@ struct AuthView: View {
     @State private var password: String = ""
     
     @FocusState private var focused: Bool
-    @State var success: Bool = false
+    @State var insuccess: Bool = false
+    @State var upsuccess: Bool = false
     
     var body: some View {
-        VStack {
+        NavigationStack {
+            Text("Note Board App Login")
+                .font(.title)
             TextField("Email (must be valid)", text: $email)
                 .textContentType(.emailAddress)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
                 .keyboardType(.emailAddress)
                 .padding()
-                .overlay(RoundedRectangle(cornerRadius: 40).stroke(Color.black))
-                .padding()
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.black))
+                .frame(width: 350)
+                .padding(.bottom)
                 .focused($focused)
             SecureField("Password (8 characters minimum)", text: $password)
                 .textContentType(.password)
                 .keyboardType(.default)
                 .padding()
-                .overlay(RoundedRectangle(cornerRadius: 40).stroke(Color.black))
-                .padding()
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.black))
+                .frame(width: 350)
                 .focused($focused)
             Button {
                 login()
                 focused = false
             } label: {
                 Text("Sign In").frame(alignment: .center)
+                    .foregroundColor(Color.blue)
             }
-            .alert("Log in successful!", isPresented: $success) {
-                Button("OK", role: .cancel) { }
-            }
-            .padding()
+            .navigationDestination(isPresented: $insuccess, destination: { ContentView() })
+            .padding(.top)
             .buttonStyle(.bordered)
             Button {
                 register()
@@ -52,24 +55,38 @@ struct AuthView: View {
                 Text("Sign Up").frame(alignment: .center)
                     .foregroundColor(Color.red)
             }
+            .alert("Account creation successful!", isPresented: $upsuccess) {
+                Button("OK", role: .cancel) { }
+            }
             .padding()
             .buttonStyle(.bordered)
-            Text("Please sign up, then sign in if you don't have an account.")
-                .frame(alignment: .center)
-                .padding()
-            Text("If you have signed up for a valid account, you will get an alert box pop up when you enter your valid email and password and press the sign in button.")
-                .padding()
-            Text("The accounts are stored on my Firebase's Firestore.")
+            VStack (alignment: .leading) {
+                Text("Note:")
+                Text("- Please sign up, then sign in if you don't have an account")
+                Text("- A successful sign up will pop up an alert")
+                Text("- Accounts are stored on Firebase")
+            }
             Spacer()
+            /*
+            .navigationTitle("Note Board App Login")
+            .navigationBarTitleDisplayMode(.inline)
+             */
+            .navigationBarHidden(true)
         }
+        /*
+        .onTapGesture {
+            focused = false
+        }
+        */
     }
     
     func login() {
         Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
             if error != nil {
                 print(error!.localizedDescription)
+                insuccess = false
             } else {
-                success = true
+                insuccess = true
             }
         }
         email = ""
@@ -80,6 +97,9 @@ struct AuthView: View {
         Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
             if error != nil {
                 print(error!.localizedDescription)
+                upsuccess = false
+            } else {
+                upsuccess = true
             }
         }
         email = ""
